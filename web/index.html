@@ -1,0 +1,268 @@
+<!--
+  @file index.html
+  @description Markup principale dell'applicazione Lab-Safe.
+-->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab-Safe</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body class="light" id="body">
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-topbar">
+      <button class="toggle-btn" id="welcomeToggle">
+        <i class="ti ti-moon" id="welcomeToggleIcon"></i>
+        <span id="welcomeToggleLabel">Dark</span>
+      </button>
+    </div>
+    <div class="welcome-logo">
+      <i class="ti ti-shield-check" aria-hidden="true"></i>
+    </div>
+    <div class="welcome-title">Lab-Safe</div>
+    <div class="welcome-sub">Assistente intelligente per la sicurezza in laboratorio</div>
+    <div class="welcome-steps">
+      <div class="welcome-step">
+        <div class="welcome-num">1</div>
+        <div>
+          <div class="welcome-step-title">Avvia webcam o carica immagine</div>
+          <div class="welcome-step-desc">Il sistema analizzerà i tuoi DPI in tempo reale</div>
+        </div>
+      </div>
+      <div class="welcome-step">
+        <div class="welcome-num">2</div>
+        <div>
+          <div class="welcome-step-title">Dichiara l'attività da svolgere</div>
+          <div class="welcome-step-desc">Es. "titolazione", "uso solventi", "fiamme"</div>
+        </div>
+      </div>
+      <div class="welcome-step">
+        <div class="welcome-num">3</div>
+        <div>
+          <div class="welcome-step-title">Indossa i DPI richiesti</div>
+          <div class="welcome-step-desc">Il sistema verificherà la conformità in automatico</div>
+        </div>
+      </div>
+      <div class="welcome-step">
+        <div class="welcome-num">4</div>
+        <div>
+          <div class="welcome-step-title">Segui le fasi guidate</div>
+          <div class="welcome-step-desc">Lab-Safe ti accompagnerà passo passo nell'esperimento</div>
+        </div>
+      </div>
+    </div>
+    <div class="welcome-badge">GRUPPO 11 · AIA 2025/2026</div>
+    <div style="width:100%;max-width:380px;margin-bottom:10px;">
+      <input
+        type="text"
+        id="loginUsername"
+        placeholder="Username"
+        class="login-input"
+      />
+      <input
+        type="password"
+        id="loginPassword"
+        placeholder="Password"
+        class="login-input"
+      />
+      <div id="loginError" style="display:none;color:#ff3b30;font-size:12px;margin-top:8px;text-align:center;"></div>
+    </div>
+    <button class="welcome-start" id="startAppBtn">Accedi</button>
+  </div>
+
+  <div class="root">
+    <div class="topbar">
+      <span class="logo">Lab<span class="logo-sep">–</span>Safe</span>
+      <span class="topbar-sub">Assistente per la Sicurezza in Laboratorio</span>
+      <div class="live-pip" id="livePip" style="visibility:hidden;">
+        <span class="live-dot"></span>
+        <span class="live-txt">LIVE</span>
+      </div>
+      <span class="topbar-time" id="topbarTime">—</span>
+      <button class="storico-btn" id="storicoBtn">
+        <i class="ti ti-history"></i> Storico
+      </button>
+      <button class="toggle-btn" id="toggleBtn">
+        <i class="ti ti-moon" id="toggleIcon"></i>
+        <span id="toggleLabel">Dark</span>
+      </button>
+    </div>
+
+    <div class="grid">
+
+      <div class="panel">
+        <div class="panel-header">
+          <i class="ti ti-video ph-icon"></i>
+          <span class="panel-title">Rilevamento operatore</span>
+          <span class="panel-badge" id="streamBadge">Webcam live</span>
+        </div>
+        <div class="mode-tabs">
+          <button class="tab active" id="tabWebcam">
+            <i class="ti ti-camera"></i> Webcam live
+          </button>
+          <button class="tab" id="tabUpload">
+            <i class="ti ti-upload"></i> Upload immagine
+          </button>
+        </div>
+        <div class="webcam-area" id="webcamArea">
+          <video id="videoFeed" autoplay playsinline style="display:none;width:100%;height:100%;object-fit:cover;border-radius:12px;"></video>
+          <div id="webcamPlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <i class="ti ti-camera webcam-cam-icon"></i>
+            <span class="webcam-hint">Webcam non attiva</span>
+            <button class="webcam-btn" id="startBtn">
+              <i class="ti ti-player-play"></i> Avvia stream
+            </button>
+          </div>
+        </div>
+        <div class="upload-area" id="uploadArea" style="display:none;">
+          <i class="ti ti-photo-up webcam-cam-icon"></i>
+          <span class="webcam-hint">Trascina un'immagine o clicca</span>
+          <input type="file" id="fileInput" accept="image/*" style="display:none" />
+          <button class="webcam-btn" id="chooseFileBtn">
+            <i class="ti ti-upload"></i> Scegli immagine
+          </button>
+          <img id="uploadPreview" style="display:none;max-width:100%;max-height:200px;border-radius:12px;margin-top:8px;" />
+        </div>
+        <div class="bottom-stats">
+          <div class="stat-row">
+            <span class="stat-label">Confidenza</span>
+            <div class="conf-track"><div class="bar-fill bar-blue" id="confBar" style="width:0%"></div></div>
+            <span class="stat-val" id="confVal">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Stato stream</span>
+            <div class="conf-track"><div class="bar-fill bar-green" id="streamBar" style="width:0%"></div></div>
+            <span class="stat-val-g" id="streamVal">inattivo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+
+        <div class="panel">
+          <div class="panel-header">
+            <i class="ti ti-shield-check ph-icon"></i>
+            <span class="panel-title">Stato DPI</span>
+            <span class="panel-badge" id="dpiBadge">in attesa</span>
+          </div>
+          <div class="dpi-list">
+            <div class="dpi-item idle" id="dpi-occhiali">
+              <span class="pulse-wrap pw-idle"><span class="pulse-dot"></span><span class="pulse-ring"></span></span>
+              Occhiali<span class="dpi-status">—</span>
+            </div>
+            <div class="dpi-item idle" id="dpi-guanti">
+              <span class="pulse-wrap pw-idle"><span class="pulse-dot"></span><span class="pulse-ring"></span></span>
+              Guanti<span class="dpi-status">—</span>
+            </div>
+            <div class="dpi-item idle" id="dpi-mascherina">
+              <span class="pulse-wrap pw-idle"><span class="pulse-dot"></span><span class="pulse-ring"></span></span>
+              Mascherina<span class="dpi-status">—</span>
+            </div>
+            <div class="dpi-item idle" id="dpi-camice">
+              <span class="pulse-wrap pw-idle"><span class="pulse-dot"></span><span class="pulse-ring"></span></span>
+              Camice<span class="dpi-status">—</span>
+            </div>
+          </div>
+          <div class="risk-strip" id="riskStrip">
+            <i class="ti ti-flask risk-icon"></i>
+            <span class="risk-label">Rischio attività</span>
+            <span class="risk-val" id="riskVal">Nessuna attività selezionata</span>
+          </div>
+        </div>
+
+        <div class="panel chat-panel">
+          <div class="panel-header">
+            <i class="ti ti-message-chatbot ph-icon"></i>
+            <span class="panel-title">Assistente Lab-Safe</span>
+            <span class="help-icon-wrap">
+              <i class="ti ti-help-circle" id="helpIcon"></i>
+              <span class="help-tooltip">Scrivi "info" in chat per vedere l'elenco dei comandi disponibili.</span>
+            </span>
+            <span class="panel-badge">Dialogflow</span>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="quick-replies" id="quickReplies">
+            <button class="qr-btn" onclick="sendQuickReply('pesatura reagenti')">Pesatura reagenti</button>
+            <button class="qr-btn" onclick="sendQuickReply('lettura pH')">Lettura pH</button>
+            <button class="qr-btn" onclick="sendQuickReply('preparazione tamponi')">Preparazione tamponi</button>
+            <button class="qr-btn" onclick="sendQuickReply('campionamento')">Campionamento</button>
+            <button class="qr-btn" onclick="sendQuickReply('miscelazione acidi')">Miscelazione acidi</button>
+            <button class="qr-btn" onclick="sendQuickReply('uso solventi')">Uso solventi</button>
+            <button class="qr-btn" onclick="sendQuickReply('uso fiamme')">Uso fiamme</button>
+            <button class="qr-btn" onclick="sendQuickReply('titolazione')">Titolazione</button>
+            <button class="qr-btn" onclick="sendQuickReply('sterilizzazione')">Sterilizzazione</button>
+            <button class="qr-btn" onclick="sendQuickReply('pipettaggio')">Pipettaggio</button>
+            <button class="qr-btn" onclick="sendQuickReply('briefing')">Briefing</button>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" type="text" placeholder="Scrivi un messaggio…" />
+            <button class="mic-btn" id="speakerBtn" aria-label="Attiva/disattiva voce">
+                <i class="ti ti-volume" id="speakerIcon"></i>
+            </button>
+            <button class="mic-btn" id="micBtn" aria-label="Parla">
+              <i class="ti ti-microphone" id="micIcon"></i>
+            </button>
+            <button class="send-btn" id="sendBtn" aria-label="Invia">
+              <i class="ti ti-arrow-up"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <i class="ti ti-history ph-icon"></i>
+      <span class="modal-title">Storico sessioni</span>
+      <button class="modal-close" id="modalClose"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabAccessi">Accessi</button>
+      <button class="modal-tab" id="tabStatistiche">Statistiche</button>
+    </div>
+    <div class="modal-content" id="contentAccessi">
+      <div class="modal-stat-row">
+        <div class="modal-stat"><div class="modal-stat-label">Sessioni</div><div class="modal-stat-value" id="statTotale">—</div></div>
+        <div class="modal-stat"><div class="modal-stat-label">Conformi</div><div class="modal-stat-value green" id="statConformi">—</div></div>
+        <div class="modal-stat"><div class="modal-stat-label">Violazioni</div><div class="modal-stat-value red" id="statViolazioni">—</div></div>
+      </div>
+      <div class="modal-section-title">Sessioni ultimi 7 giorni</div>
+      <div class="line-chart-wrap"><svg id="lineChart" viewBox="0 0 460 70" preserveAspectRatio="none" style="width:100%;height:80px;overflow:visible"></svg></div>
+      <div class="modal-section-title">Accessi recenti</div>
+      <div class="log-list" id="logList"></div>
+    </div>
+    <div class="modal-content" id="contentStatistiche" style="display:none">
+      <div class="stats-charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-title">Tasso conformità</div>
+          <div class="donut-wrap">
+            <svg id="donutChart" width="80" height="80" viewBox="0 0 80 80"></svg>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">DPI dimenticati</div>
+          <div class="dpi-bar-list" id="dpiBarList"></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-card-title">Attività più frequenti</div>
+        <div class="bubble-wrap" id="bubbleWrap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <script src="overlays.js"></script>
+  <script src="storico.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
